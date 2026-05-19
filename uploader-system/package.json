@@ -1,0 +1,13 @@
+{
+  "name": "instagram-reel-uploader",
+  "version": "1.0.0",
+  "description": "Upload worker system for Instagram reel scraper",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "form-data": "^4.0.0"
+  }
+}
