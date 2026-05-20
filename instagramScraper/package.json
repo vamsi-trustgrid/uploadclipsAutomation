@@ -1,0 +1,12 @@
+{
+  "name": "instagram-scraper",
+  "version": "1.0.0",
+  "description": "Instagram Scraper using Electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^41.6.1"
+  }
+}

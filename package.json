@@ -1,16 +1,13 @@
 {
   "name": "instagram-downloader",
   "version": "1.0.0",
-  "main": "main.js",
+  "description": "Monorepo / tool manager for Instagram scraper and video uploader",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "electron": "^41.6.1"
+    "install:scraper": "cd instagramScraper && npm install",
+    "install:uploader": "cd uploadSystem && npm install",
+    "install:all": "npm run install:scraper && npm run install:uploader",
+    "start:scraper": "cd instagramScraper && npm start",
+    "start:uploader": "cd uploadSystem && npm start",
+    "start": "npm run start:scraper && npm run start:uploader"
   }
 }
