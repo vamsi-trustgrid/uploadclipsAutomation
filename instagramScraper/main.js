@@ -4,7 +4,7 @@ const { exit } = require("process");
 // ─── Config ───────────────────────────────────────────────────────────────────
 const USERNAME = "ylovingly35@gmail.com";
 const PASSWORD = "yourslovingly";
-const REELS_TO_COLLECT = 3; // change to 20 when ready
+const REELS_TO_COLLECT = 10; // change to 20 when ready
 const DOWNLOADER_URL = "https://fastdl.app/en2";
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -131,6 +131,41 @@ async function loginFlow(wc) {
   return true;
 }
 
+// ── Helper functions for share sheet & scroll ────────────────────────────────
+async function closeShareSheet(wc) {
+  const shareClosed = await wc.executeJavaScript(`
+    (function() {
+      const closeSelectors = ["[aria-label='Close']", "[aria-label='close']"];
+      for (const sel of closeSelectors) {
+        const el = document.querySelector(sel);
+        if (el && el.offsetParent !== null) {
+          const target = el.tagName === "SVG" ? el.parentElement : el;
+          target.click();
+          return true;
+        }
+      }
+      return false;
+    })();
+  `);
+  if (shareClosed) {
+    console.log("[Reels] Closed share sheet via X button.");
+  } else {
+    await wc.executeJavaScript(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));`);
+    console.log("[Reels] Closed share sheet via Escape.");
+  }
+  await sleep(800);
+}
+
+async function scrollNextReel(wc) {
+  mainWindow.focus();
+  wc.focus();
+  await sleep(300);
+  wc.sendInputEvent({ type: "keyDown", keyCode: "Down" });
+  wc.sendInputEvent({ type: "keyUp", keyCode: "Down" });
+  console.log("[Reels] Sent ArrowDown. Waiting for next reel...");
+  await sleep(3500);
+}
+
 // ── COLLECT REEL LINKS ────────────────────────────────────────────────────────
 async function collectReelLinks(wc) {
   console.log("[Reels] Navigating to Reels tab...");
@@ -211,7 +246,8 @@ async function collectReelLinks(wc) {
 
     if (!shareClicked) {
       console.error("[Reels] Share button not found on reel " + (i + 1));
-      await sleep(2000);
+      await scrollNextReel(wc);
+      i--;
       continue;
     }
 
@@ -231,9 +267,10 @@ async function collectReelLinks(wc) {
     `);
 
     if (!copyClicked) {
-      console.error("[Reels] Copy link not found on reel " + (i + 1));
-      await wc.executeJavaScript(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));`);
-      await sleep(1000);
+      console.warn("[Reels] Copy link not found on reel " + (i + 1) + " (likely an ad). Skipping...");
+      await closeShareSheet(wc);
+      await scrollNextReel(wc);
+      i--;
       continue;
     }
 
@@ -253,37 +290,8 @@ async function collectReelLinks(wc) {
       console.error("[Reels] No link captured for reel " + (i + 1));
     }
 
-    // Close share sheet - click X button or fallback to Escape
-    const shareClosed = await wc.executeJavaScript(`
-      (function() {
-        const closeSelectors = ["[aria-label='Close']", "[aria-label='close']"];
-        for (const sel of closeSelectors) {
-          const el = document.querySelector(sel);
-          if (el && el.offsetParent !== null) {
-            const target = el.tagName === "SVG" ? el.parentElement : el;
-            target.click();
-            return true;
-          }
-        }
-        return false;
-      })();
-    `);
-    if (shareClosed) {
-      console.log("[Reels] Closed share sheet via X button.");
-    } else {
-      await wc.executeJavaScript(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));`);
-      console.log("[Reels] Closed share sheet via Escape.");
-    }
-    await sleep(800);
-
-    // Focus the page first, then send native ArrowDown
-    mainWindow.focus();
-    wc.focus();
-    await sleep(300);
-    wc.sendInputEvent({ type: "keyDown", keyCode: "Down" });
-    wc.sendInputEvent({ type: "keyUp", keyCode: "Down" });
-    console.log("[Reels] Sent ArrowDown. Waiting for next reel...");
-    await sleep(3500);
+    await closeShareSheet(wc);
+    await scrollNextReel(wc);
   }
 
   console.log("[Reels] Collected " + reelLinks.length + "/" + REELS_TO_COLLECT + " links:");
